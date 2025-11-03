@@ -1,0 +1,6 @@
+# Allow all crawlers
+User-agent: *
+Disallow:
+
+# Sitemap location (optional if you add one)
+# Sitemap: https://emmy-strong.org/sitemap.xml
