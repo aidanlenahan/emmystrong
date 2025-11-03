@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | EmmyStrong</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="logo">EmmyStrong</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="donate.html">Donate</a></li>
+            <li><a href="news.html">News</a></li>
+            <li class="dropdown">
+                <a href="#">More ▾</a>
+                <ul class="dropdown-menu">
+                    <li><a href="events.html">Events</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="menu-toggle" id="mobile-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Contact Us</h1>
+            <p>We’d love to hear from you! Reach out to us for questions, volunteer opportunities, or partnership inquiries.</p>
+        </div>
+        <div class="hero-image">
+            <img src="images/contact-placeholder.jpg" alt="Contact EmmyStrong">
+        </div>
+    </section>
+
+    <section class="contact-form">
+        <h2>Send a Message</h2>
+        <form action="mailto:EmstrongNJ@gmail.com" method="post" enctype="text/plain">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="subject">Subject:</label>
+            <input type="text" id="subject" name="subject" required>
+
+            <label for="message">Message:</label>
+            <textarea id="message" name="message" rows="6" required></textarea>
+
+            <button type="submit" class="btn-primary">Send Message</button>
+        </form>
+    </section>
+
+    <section class="contact-info">
+        <h2>Other Ways to Reach Us</h2>
+        <p>Email: <a href="mailto:EmstrongNJ@gmail.com">EmstrongNJ@gmail.com</a></p>
+        <p>Follow us on Instagram: <a href="https://instagram.com/emmystrongnj" target="_blank">@emmystrongnj</a></p>
+        <p>EmmyStrong Foundation is a 501(c)(3) charitable organization.</p>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-links">
+        <a href="https://instagram.com/emmystrongnj" target="_blank">Instagram</a> |
+        <a href="mailto:EmstrongNJ@gmail.com">Email</a>
+    </div>
+    <p>© 2025 Emmy Strong Organization. Website code MIT licensed. Content CC BY-NC 4.0.</p>
+</footer>
+
+<script src="js/script.js"></script>
+</body>
+</html>
