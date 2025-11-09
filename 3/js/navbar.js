@@ -1,9 +1,31 @@
-// Dynamically load the navbar from partials/navbar.html
+// Dynamically load the navbar partial into the page.
+// Works on GitHub Pages when files are served over HTTPS.
+
 document.addEventListener("DOMContentLoaded", () => {
-    fetch("partials/navbar.html")
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById("navbar").innerHTML = html;
-        })
-        .catch(err => console.error("Failed to load navbar:", err));
+  const container = document.getElementById("navbar");
+  if (!container) return;
+
+  fetch("partials/navbar.html")
+    .then(resp => {
+      if (!resp.ok) throw new Error("Network response was not ok");
+      return resp.text();
+    })
+    .then(html => {
+      container.innerHTML = html;
+
+      // Re-run any main.js init logic if it relies on navbar elements.
+      if (window.initNavbar) window.initNavbar();
+    })
+    .catch(err => {
+      console.error("Failed to load navbar:", err);
+      // Fallback: show an inline minimal nav so the page is usable
+      container.innerHTML = `
+        <nav class="fallback-nav">
+          <a href="index.html">Home</a>
+          <a href="about.html">About</a>
+          <a href="donate.html">Donate</a>
+          <a href="events.html">Events</a>
+        </nav>
+      `;
+    });
 });
