@@ -1,5 +1,6 @@
 // Dynamically load the navbar partial into the page.
 // Works on GitHub Pages when files are served over HTTPS.
+
 document.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("navbar");
   if (!container) return;
@@ -11,23 +12,19 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then(html => {
       container.innerHTML = html;
-      // Optionally, re-run main.js init logic if it relies on navbar elements.
+
+      // Re-run any main.js init logic if it relies on navbar elements.
       if (window.initNavbar) window.initNavbar();
     })
     .catch(err => {
       console.error("Failed to load navbar:", err);
-      // fallback: show an inline minimal nav so the page is usable
+      // Fallback: show an inline minimal nav so the page is usable
       container.innerHTML = `
-        <nav class="navbar">
-          <div class="nav-container">
-            <a href="index.html" class="logo">EmmyStrong</a>
-            <ul class="nav-links">
-              <li><a href="index.html">Home</a></li>
-              <li><a href="about.html">About</a></li>
-              <li><a href="donate.html">Donate</a></li>
-              <li><a href="events.html">Events</a></li>
-            </ul>
-          </div>
+        <nav class="fallback-nav">
+          <a href="index.html">Home</a>
+          <a href="about.html">About</a>
+          <a href="donate.html">Donate</a>
+          <a href="events.html">Events</a>
         </nav>
       `;
     });
