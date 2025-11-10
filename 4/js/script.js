@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Mobile toggle
-    const mobileToggle = document.getElementById("mobile-toggle");
+    const mobileToggle = document.querySelector(".mobile-toggle");
     const navList = document.querySelector(".nav-list");
     if (mobileToggle && navList) {
       mobileToggle.addEventListener("click", () => {

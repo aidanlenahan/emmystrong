@@ -1,6 +1,3 @@
-// navbar.js — Theme 3 styled, compatible with GitHub Pages and file://
-// Inserts the navbar dynamically into <div id="navbar"></div> in each HTML file
-
 document.addEventListener("DOMContentLoaded", () => {
   const navbarHTML = `
     <nav class="navbar">
@@ -27,24 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const navbarContainer = document.getElementById("navbar");
   if (navbarContainer) {
     navbarContainer.innerHTML = navbarHTML;
-
-    // Handle mobile dropdown click fallback
-    const dropdownBtn = document.querySelector(".dropbtn");
-    if (dropdownBtn) {
-      dropdownBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        const dropdownContent = dropdownBtn.nextElementSibling;
-        dropdownContent.classList.toggle("show");
-      });
-    }
-
-    // Close dropdown when clicking outside
-    window.addEventListener("click", (e) => {
-      if (!e.target.matches(".dropbtn")) {
-        const dropdowns = document.querySelectorAll(".dropdown-content");
-        dropdowns.forEach((dd) => dd.classList.remove("show"));
-      }
-    });
   } else {
     console.error("Navbar container (#navbar) not found.");
   }
