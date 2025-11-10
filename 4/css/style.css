@@ -157,6 +157,29 @@ html, body {
   text-align: center;
 }
 
+.hero-home .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+@media (min-width: 800px) {
+  .hero-home .container {
+    flex-direction: row;
+    text-align: left;
+  }
+  .hero-left {
+    flex: 1;
+  }
+  .hero-right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 .hero h1 {
   font-size: 2.4rem;
   margin-bottom: 1rem;
@@ -226,6 +249,9 @@ html, body {
 
 /* === Responsive === */
 @media (max-width: 800px) {
+  .hero {
+    padding: 3rem 0 2rem;
+  }
   .nav-list {
     display: none;
     flex-direction: column;
