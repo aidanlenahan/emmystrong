@@ -1,31 +1,51 @@
-// Dynamically load the navbar partial into the page.
-// Works on GitHub Pages when files are served over HTTPS.
+// navbar.js — Theme 3 styled, compatible with GitHub Pages and file://
+// Inserts the navbar dynamically into <div id="navbar"></div> in each HTML file
 
 document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById("navbar");
-  if (!container) return;
+  const navbarHTML = `
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="index.html" class="nav-logo">Emmy Strong</a>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="donate.html">Donate</a></li>
+          <li><a href="news.html">News</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropbtn">More</a>
+            <div class="dropdown-content">
+              <a href="resources.html">Resources</a>
+              <a href="events.html">Events</a>
+              <a href="contact.html">Contact</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  `;
 
-  fetch("partials/navbar.html")
-    .then(resp => {
-      if (!resp.ok) throw new Error("Network response was not ok");
-      return resp.text();
-    })
-    .then(html => {
-      container.innerHTML = html;
+  const navbarContainer = document.getElementById("navbar");
+  if (navbarContainer) {
+    navbarContainer.innerHTML = navbarHTML;
 
-      // Re-run any main.js init logic if it relies on navbar elements.
-      if (window.initNavbar) window.initNavbar();
-    })
-    .catch(err => {
-      console.error("Failed to load navbar:", err);
-      // Fallback: show an inline minimal nav so the page is usable
-      container.innerHTML = `
-        <nav class="fallback-nav">
-          <a href="index.html">Home</a>
-          <a href="about.html">About</a>
-          <a href="donate.html">Donate</a>
-          <a href="events.html">Events</a>
-        </nav>
-      `;
+    // Handle mobile dropdown click fallback
+    const dropdownBtn = document.querySelector(".dropbtn");
+    if (dropdownBtn) {
+      dropdownBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const dropdownContent = dropdownBtn.nextElementSibling;
+        dropdownContent.classList.toggle("show");
+      });
+    }
+
+    // Close dropdown when clicking outside
+    window.addEventListener("click", (e) => {
+      if (!e.target.matches(".dropbtn")) {
+        const dropdowns = document.querySelectorAll(".dropdown-content");
+        dropdowns.forEach((dd) => dd.classList.remove("show"));
+      }
     });
+  } else {
+    console.error("Navbar container (#navbar) not found.");
+  }
 });
