@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function openExternalLinksInNewTab() {
     const links = document.querySelectorAll("a");
     links.forEach(link => {
-        if (link.closest('.site-nav')) {
+        if (link.closest('.site-nav') || link.id === 'go-home-btn') {
             return;
         }
         link.setAttribute("target", "_blank");
