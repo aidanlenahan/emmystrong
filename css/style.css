@@ -2,8 +2,8 @@
 
 /* === Root Theme Variables === */
 :root {
-  --accent: #0b74de;
-  --accent-light: #3fa2ff;
+  --accent: #ff8200;
+  --accent-light: #ff9e40;
   --bg: #f5f7fa;
   --text: #0f1724;
   --muted: #6b7280;
@@ -57,12 +57,8 @@ html, body {
 }
 
 /* Brand */
-.brand {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--nav-text);
-  text-decoration: none;
-  letter-spacing: 0.3px;
+.brand img {
+  vertical-align: middle;
 }
 
 /* Nav List */
@@ -85,6 +81,8 @@ html, body {
   cursor: pointer;
   background: none;
   border: none;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .nav-list a:hover,
@@ -101,7 +99,7 @@ html, body {
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  right: 0; /* Align to the right */
   background: var(--card);
   color: var(--text);
   border-radius: 8px;
@@ -144,9 +142,10 @@ html, body {
   display: block;
   height: 3px;
   background: var(--nav-text);
-  margin: 5px 0;
+  margin: 5px auto;
   border-radius: 2px;
   width: 22px;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 /* === Hero === */
@@ -209,7 +208,7 @@ html, body {
 
 /* === Section / Content === */
 .section {
-  padding: 3rem 0;
+  padding: 1rem 0; /* Reduced padding */
 }
 
 .section h2 {
@@ -247,6 +246,16 @@ html, body {
   margin-top: 2rem;
 }
 
+.site-footer a {
+  color: var(--accent-light);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
 /* === Responsive === */
 @media (max-width: 800px) {
   .hero {
@@ -254,11 +263,17 @@ html, body {
   }
   .nav-list {
     display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--nav-bg);
     flex-direction: column;
     gap: 0.5rem;
-    background: var(--nav-bg);
-    width: 100%;
-    padding: 0.8rem 0;
+    width: auto;
+    min-width: 200px;
+    padding: 0.8rem;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
   }
   .nav-list.open {
     display: flex;
@@ -266,14 +281,18 @@ html, body {
   .mobile-toggle {
     display: block;
   }
-  .nav-dropdown:hover .dropdown-menu {
-    display: none;
+  .nav-dropdown .dropdown-menu {
+    display: none; /* Hide on mobile */
   }
-  .dropdown-menu {
-    position: relative;
-    top: 0;
-    left: 0;
-    box-shadow: none;
-    background: var(--card);
-  }
+}
+
+/* === Hyperlink === */
+:not(nav) > a {
+  color: #ff8200;
+}
+
+/* === Active Nav Link === */
+.nav-list .active a {
+  background: var(--nav-hover);
+  color: #ff8200;
 }
