@@ -141,4 +141,26 @@ document.addEventListener("DOMContentLoaded", () => {
       insertFallbackNav();
       setTimeout(initializeSiteBehaviors, 20); // Also use for fallback
     });
+
+  const footerContainer = document.getElementById("footer");
+  if (footerContainer) {
+    fetch("partials/footer.html")
+      .then(resp => {
+        if (!resp.ok) throw new Error("Network response was not ok");
+        return resp.text();
+      })
+      .then(html => {
+        footerContainer.innerHTML = html;
+      })
+      .catch(err => {
+        console.warn("Loading footer partial failed:", err);
+        footerContainer.innerHTML = `
+          <footer class="site-footer">
+            <div class="container">
+              <p>© 2025 EmmyStrong Foundation — a 501(c)(3) charitable organization.</p>
+            </div>
+          </footer>
+        `;
+      });
+  }
 });
