@@ -191,7 +191,8 @@ html, body {
   margin: 0 auto 1.5rem auto;
 }
 
-.hero .btn {
+/* === Buttons === */
+.btn {
   display: inline-block;
   background: var(--accent);
   color: white;
@@ -200,10 +201,25 @@ html, body {
   padding: 0.8rem 1.4rem;
   border-radius: 8px;
   transition: background 0.2s;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: center;
 }
 
-.hero .btn:hover {
+.btn:hover {
   background: var(--accent-light);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+.btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* === Section / Content === */
