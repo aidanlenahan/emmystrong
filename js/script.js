@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
         footerContainer.innerHTML = `
           <footer class="site-footer">
             <div class="container">
-              <p>© 2025 EmmyStrong Foundation — a 501(c)(3) charitable organization.</p>
+              <p>© 2026 EmmyStrong Foundation — a 501(c)(3) charitable organization.</p>
             </div>
           </footer>
         `;
