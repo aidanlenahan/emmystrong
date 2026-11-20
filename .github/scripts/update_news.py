@@ -143,24 +143,24 @@ def render(posts, images):
         return "\n      " + EMPTY + "\n      "
     items = []
     for p in posts:
-        parts = []
-        img = images.get(p["_row"])
-        if img:
-            parts.append(f'<img class="news-image" src="{img}" alt="" loading="lazy" decoding="async">')
-        body = []
+        head, body = [], []
         if p["_date"]:
             d = p["_date"]
-            body.append(f'<time class="news-date" datetime="{d.isoformat()}">{d:%B} {d.day}, {d.year}</time>')
+            head.append(f'<time class="news-date" datetime="{d.isoformat()}">{d:%B} {d.day}, {d.year}</time>')
         if p.get("title"):
-            body.append(f'<h3 class="news-title">{html.escape(p["title"])}</h3>')
+            head.append(f'<h3 class="news-title">{html.escape(p["title"])}</h3>')
         if p.get("text"):
             body.append(text_html(p["text"]))
         link = safe_link(p.get("link", ""))
         if link:
             label = html.escape(p.get("link text") or "Learn more")
             body.append(f'<p class="news-cta"><a class="btn btn-outline" href="{html.escape(link)}">{label}</a></p>')
-        parts.append('<div class="news-body">' + "".join(body) + "</div>")
-        items.append('        <article class="news-item">' + "".join(parts) + "</article>")
+        img = images.get(p["_row"])
+        image = f'<img class="news-image" src="{img}" alt="" loading="lazy" decoding="async">' if img else ""
+        # Phones show just the date and title until the post is tapped (see js/script.js).
+        summary = '<summary class="news-summary"><span class="news-head">' + "".join(head) + "</span></summary>"
+        items.append('        <article class="news-item">' + image + '<details class="news-toggle" open>'
+                     + summary + '<div class="news-body">' + "".join(body) + "</div></details></article>")
     return '\n      <div class="news-list">\n' + "\n".join(items) + "\n      </div>\n      "
 
 
