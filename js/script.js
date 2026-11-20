@@ -131,9 +131,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Events and news posts: on phones each starts collapsed and only one stays
-    // open at a time; on wider screens they're always open.
-    const toggles = document.querySelectorAll(".event-toggle, .news-toggle");
+    // Events: on phones each starts collapsed and only one stays open at a time;
+    // on wider screens they're always open.
+    const toggles = document.querySelectorAll(".event-toggle");
     if (!toggles.length) return;
     const phone = window.matchMedia("(max-width: 600px)");
     const apply = () => toggles.forEach(d => { d.open = !phone.matches; });
@@ -150,7 +150,112 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Slideshow for posts with more than one picture: swipe or scroll sideways,
+  // or use the arrows and dots.
+  function initCarousel(media) {
+    const track = media.querySelector(".news-track");
+    const slides = track.children;
+    const button = (cls, label, text) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "news-nav " + cls;
+      b.setAttribute("aria-label", label);
+      b.textContent = text;
+      media.appendChild(b);
+      return b;
+    };
+    const prev = button("news-prev", "Previous picture", "‹");
+    const next = button("news-next", "Next picture", "›");
+    const dots = document.createElement("div");
+    dots.className = "news-dots";
+    const go = i => track.scrollTo({ left: i * track.clientWidth });
+    Array.from(slides).forEach((_, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "news-dot";
+      dot.setAttribute("aria-label", `Picture ${i + 1} of ${slides.length}`);
+      dot.addEventListener("click", () => go(i));
+      dots.appendChild(dot);
+    });
+    media.appendChild(dots);
+    const current = () => Math.round(track.scrollLeft / (track.clientWidth || 1));
+    const update = () => {
+      const i = current();
+      prev.disabled = i === 0;
+      next.disabled = i === slides.length - 1;
+      Array.from(dots.children).forEach((d, j) => d.setAttribute("aria-current", String(i === j)));
+    };
+    prev.addEventListener("click", () => go(current() - 1));
+    next.addEventListener("click", () => go(current() + 1));
+    track.addEventListener("scroll", update, { passive: true });
+    update();
+  }
+
+  // News: each card shows the first few lines. If a post is longer, "Read more"
+  // opens the whole post (picture, text, button) in a full-page view.
+  function initNews() {
+    const posts = document.querySelectorAll(".news-item");
+    if (!posts.length) return;
+
+    const modal = document.createElement("dialog");
+    modal.className = "news-modal";
+    modal.setAttribute("aria-label", "News post");
+    document.body.appendChild(modal);
+    let opener = null;
+
+    function open(post) {
+      opener = document.activeElement;
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "news-modal-close";
+      close.setAttribute("aria-label", "Close");
+      close.textContent = "×";
+      close.addEventListener("click", () => modal.close());
+      const full = post.cloneNode(true);
+      full.querySelectorAll(".news-more, .news-nav, .news-dots").forEach(b => b.remove());
+      full.querySelectorAll(".is-cut").forEach(el => el.classList.remove("is-cut"));
+      full.querySelectorAll("img").forEach(img => img.removeAttribute("loading"));
+      modal.replaceChildren(close, ...full.childNodes);
+      openExternalLinksInNewTab();
+      modal.showModal();
+      modal.scrollTop = 0;
+      // Open the slideshow on the same picture the card was showing.
+      const from = post.querySelector(".news-carousel .news-track");
+      const to = modal.querySelector(".news-carousel");
+      if (to) {
+        initCarousel(to);
+        if (from) to.querySelector(".news-track").scrollTo({
+          left: Math.round(from.scrollLeft / from.clientWidth) * to.clientWidth, behavior: "instant"
+        });
+      }
+      close.focus();
+    }
+
+    modal.addEventListener("click", e => { if (e.target === modal) modal.close(); }); // click outside
+    modal.addEventListener("close", () => { if (opener) opener.focus(); });
+
+    function measure() {
+      posts.forEach(post => {
+        const text = post.querySelector(".news-text");
+        const more = post.querySelector(".news-more");
+        if (!text || !more) return;
+        const cut = text.scrollHeight > text.clientHeight + 2;
+        text.classList.toggle("is-cut", cut);
+        more.hidden = !cut;
+      });
+    }
+    document.querySelectorAll(".news-list .news-carousel").forEach(initCarousel);
+    posts.forEach(post => {
+      const more = post.querySelector(".news-more");
+      if (more) more.addEventListener("click", () => open(post));
+    });
+    measure();
+    window.addEventListener("resize", measure);
+    if (document.fonts) document.fonts.ready.then(measure);
+  }
+
   initEvents();
+  initNews();
 
   function initializeSiteBehaviors() {
     initNavBehavior();

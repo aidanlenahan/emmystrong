@@ -28,14 +28,16 @@ import html
 import json
 import os
 import re
-import shutil
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
 
+from image_opt import optimize  # same folder; Python puts the script's folder on the path
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MEDIA_DIR = os.path.join(ROOT, "media", "instagram")
+IMAGE_MAX_WIDTH = 720  # grid tiles are at most ~360px wide; 2x for sharp phone/retina screens
 MEDIA_URL = "media/instagram"  # relative, so the page also previews correctly from file://
 PAGES = ["index.html", "news.html", "events.html"]
 PROFILE_URL = "https://www.instagram.com/emmystrongnj/"
@@ -94,18 +96,25 @@ def fetch_posts(token, count, user_id=None):
 
 
 def save_image(src, post_id):
+    """Download a post's image, shrunk to WebP (see image_opt.py), and return its file name."""
     os.makedirs(MEDIA_DIR, exist_ok=True)
-    filename = f"{post_id}.jpg"
-    dest = os.path.join(MEDIA_DIR, filename)
-    if os.path.exists(dest):
-        return filename
+    webp = os.path.join(MEDIA_DIR, post_id + ".webp")
+    if os.path.exists(webp):
+        return post_id + ".webp"
+    old = os.path.join(MEDIA_DIR, post_id + ".jpg")
+    if os.path.exists(old):  # saved before images were optimized: convert it in place
+        src = old
     if re.match(r"https?://", src):
         req = urllib.request.Request(src, headers={"User-Agent": "static-site-feed-updater"})
-        with urllib.request.urlopen(req, timeout=60) as resp, open(dest, "wb") as out:
-            shutil.copyfileobj(resp, out)
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = resp.read()
     else:
-        shutil.copyfile(src, dest)
-    return filename
+        with open(src, "rb") as f:
+            data = f.read()
+    data, ext = optimize(data, IMAGE_MAX_WIDTH)
+    with open(os.path.join(MEDIA_DIR, post_id + ext), "wb") as out:
+        out.write(data)
+    return post_id + ext
 
 
 def alt_text(caption):
@@ -152,7 +161,7 @@ def prune(keep):
     if not os.path.isdir(MEDIA_DIR):
         return
     for name in os.listdir(MEDIA_DIR):
-        if name.endswith(".jpg") and name not in keep:
+        if name.endswith((".jpg", ".webp")) and name not in keep:
             os.remove(os.path.join(MEDIA_DIR, name))
             print(f"Removed old image {name}.")
 
