@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Page Not Found | EmmyStrong Foundation</title>
   <meta name="robots" content="noindex, follow">
+  <script>
+    // Pages that were removed: send old links to their replacement.
+    if (/^\/events(\.html)?\/?$/.test(location.pathname)) location.replace("/news");
+  </script>
   <link rel="icon" href="/media/favicon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
