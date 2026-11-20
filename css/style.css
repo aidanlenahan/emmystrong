@@ -52,7 +52,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-main { flex: 1; }
+main { flex: 1; width: 100%; } /* body is a flex column; without this, main shrinks to its content */
 
 h1, h2, h3 {
   line-height: 1.2;
@@ -98,7 +98,7 @@ a:hover { color: var(--text); }
 
 /* === Container === */
 .container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.25rem;
 }
@@ -122,7 +122,7 @@ a:hover { color: var(--text); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0.75rem 1.25rem;
 }
@@ -317,7 +317,7 @@ a:hover { color: var(--text); }
 }
 
 .prose {
-  max-width: 70ch;
+  max-width: 80ch;
   margin-left: auto;
   margin-right: auto;
 }
@@ -618,6 +618,9 @@ a:hover { color: var(--text); }
   align-items: center;
 }
 .split h2 { text-align: left; }
+/* Without a photo, keep the text at a readable width and centered like other sections. */
+.split:not(.has-media) > div { max-width: 80ch; margin: 0 auto; }
+.split:not(.has-media) h2 { text-align: center; }
 @media (min-width: 800px) {
   .split.has-media { grid-template-columns: 1.4fr 1fr; }
 }
