@@ -116,6 +116,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Events: hide ones that have ended since the page was last rebuilt, and on
+  // phones collapse each event to its title and date until it's tapped.
+  function initEvents() {
+    const now = Date.now();
+    document.querySelectorAll(".event-list-upcoming").forEach(list => {
+      list.querySelectorAll(".event[data-end]").forEach(item => {
+        if (Date.parse(item.dataset.end) <= now) item.remove();
+      });
+      if (!list.querySelector(".event")) {
+        list.hidden = true;
+        const empty = list.parentElement.querySelector(".events-empty");
+        if (empty) empty.hidden = false;
+      }
+    });
+
+    const toggles = document.querySelectorAll(".event-toggle");
+    if (!toggles.length) return;
+    const phone = window.matchMedia("(max-width: 600px)");
+    const apply = () => toggles.forEach(d => { d.open = !phone.matches; });
+    apply();
+    phone.addEventListener("change", apply);
+    // On wider screens details are always shown, so clicking an event does nothing.
+    toggles.forEach(d => d.querySelector("summary").addEventListener("click", e => {
+      if (!phone.matches) e.preventDefault();
+    }));
+  }
+
+  initEvents();
+
   function initializeSiteBehaviors() {
     initNavBehavior();
     highlightActiveLink();

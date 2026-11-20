@@ -2,7 +2,7 @@ name: Update events
 
 on:
   schedule:
-    - cron: "43 */3 * * *"   # every 3 hours
+    - cron: "43 * * * *"     # every hour
   workflow_dispatch:         # "Run workflow" button in the Actions tab
 
 permissions:
@@ -17,9 +17,9 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -27,12 +27,13 @@ jobs:
         env:
           GCAL_ICS_URL: ${{ secrets.GCAL_ICS_URL }}
           EVENT_COUNT: "6"
+          PAST_COUNT: "30"
         run: python .github/scripts/update_events.py
 
       - name: Commit changes
         id: commit
         run: |
-          git add -A news.html
+          git add -A news.html past-events.html events.ics
           if git diff --cached --quiet; then
             echo "No changes."
             echo "changed=false" >> "$GITHUB_OUTPUT"

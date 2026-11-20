@@ -40,7 +40,7 @@ MEDIA_URL = "media/instagram"  # relative, so the page also previews correctly f
 PAGES = ["index.html", "news.html"]
 PROFILE_URL = "https://www.instagram.com/emmystrongnj/"
 API = "https://graph.instagram.com"           # Instagram Login tokens (start with "IG")
-FB_API = "https://graph.facebook.com/v23.0"   # Unified login / system-user tokens (start with "EAA")
+FB_API = "https://graph.facebook.com"   # Unified login / system-user tokens (start with "EAA"). Unversioned: Meta picks a supported version.
 MARKER = re.compile(r"(<!-- INSTAGRAM:START -->)(.*?)(<!-- INSTAGRAM:END -->)", re.S)
 
 
