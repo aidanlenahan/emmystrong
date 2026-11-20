@@ -37,7 +37,7 @@ import urllib.request
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MEDIA_DIR = os.path.join(ROOT, "media", "instagram")
 MEDIA_URL = "media/instagram"  # relative, so the page also previews correctly from file://
-PAGES = ["index.html", "news.html"]
+PAGES = ["index.html", "news.html", "events.html"]
 PROFILE_URL = "https://www.instagram.com/emmystrongnj/"
 API = "https://graph.instagram.com"           # Instagram Login tokens (start with "IG")
 FB_API = "https://graph.facebook.com"   # Unified login / system-user tokens (start with "EAA"). Unversioned: Meta picks a supported version.

@@ -33,7 +33,7 @@ jobs:
       - name: Commit changes
         id: commit
         run: |
-          git add -A news.html past-events.html events.ics
+          git add -A events.html past-events.html events.ics
           if git diff --cached --quiet; then
             echo "No changes."
             echo "changed=false" >> "$GITHUB_OUTPUT"
