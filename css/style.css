@@ -357,26 +357,6 @@ a:hover { color: var(--text); }
   margin-bottom: 0.5rem;
 }
 
-/* Featured news item */
-.feature-card {
-  max-width: 720px;
-  margin: 0 auto;
-  border-top: 4px solid var(--accent);
-}
-.eyebrow-date {
-  color: var(--accent-ink);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.promo-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: #fff1e0;
-  padding: 0.1em 0.4em;
-  border-radius: 6px;
-  letter-spacing: 0.04em;
-  user-select: all;
-}
-
 /* Instagram feed (baked in by .github/scripts/update_instagram.py) */
 .ig-grid {
   list-style: none;
