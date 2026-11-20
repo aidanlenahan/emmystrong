@@ -443,6 +443,63 @@ a:hover { color: var(--text); }
   }
 }
 
+/* Upcoming events (baked in by .github/scripts/update_events.py) */
+.event-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 760px;
+  display: grid;
+  gap: 1rem;
+}
+.event {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  background: var(--surface);
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.event-date {
+  flex: 0 0 auto;
+  width: 4rem;
+  padding: 0.5rem 0 0.6rem;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  text-align: center;
+  line-height: 1;
+}
+.event-month {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.event-day {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.event-body { min-width: 0; }
+.event-body h3 { margin: 0 0 0.35rem; color: var(--heading); font-size: 1.15rem; }
+.event-body p { margin: 0.3rem 0 0; overflow-wrap: anywhere; }
+.event-when { color: var(--accent-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.event-where { color: var(--muted); }
+.events-note { margin-top: 1.5rem; }
+.nowrap { white-space: nowrap; }
+@media (max-width: 600px) {
+  .event { gap: 0.9rem; padding: 1rem; }
+  .event-sep { display: none; }
+  .event-time { display: block; }
+  .event-date { width: 3.25rem; }
+  .event-day { font-size: 1.4rem; }
+}
+
 /* Board */
 .board-grid {
   display: grid;
