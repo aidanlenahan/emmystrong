@@ -11,7 +11,9 @@ Runs daily from .github/workflows/instagram-feed.yml. It:
   5. Removes images of posts that dropped out of the feed.
 
 Environment:
-  IG_ACCESS_TOKEN   long-lived Instagram user access token (GitHub secret)
+  IG_ACCESS_TOKEN   access token (GitHub secret): an Instagram Login token ("IG...",
+                    refreshed each run) or a Unified login system-user token ("EAA...")
+  IG_USER_ID        Instagram account ID, required for "EAA..." tokens
   IG_POST_COUNT     optional, number of posts to show (default 6)
 
 Local testing without a token:
@@ -28,6 +30,7 @@ import os
 import re
 import shutil
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -36,14 +39,24 @@ MEDIA_DIR = os.path.join(ROOT, "media", "instagram")
 MEDIA_URL = "media/instagram"  # relative, so the page also previews correctly from file://
 PAGES = ["index.html"]
 PROFILE_URL = "https://www.instagram.com/emmystrongnj/"
-API = "https://graph.instagram.com"
+API = "https://graph.instagram.com"           # Instagram Login tokens (start with "IG")
+FB_API = "https://graph.facebook.com/v23.0"   # Unified login / system-user tokens (start with "EAA")
 MARKER = re.compile(r"(<!-- INSTAGRAM:START -->)(.*?)(<!-- INSTAGRAM:END -->)", re.S)
 
 
 def get_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": "static-site-feed-updater"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.load(resp)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.load(resp)
+    except urllib.error.HTTPError as e:
+        # Surface Instagram's error message (it never echoes the token back).
+        try:
+            detail = json.load(e).get("error", {})
+            msg = f"{detail.get('type', '')} {detail.get('code', '')}: {detail.get('message', '')}".strip()
+        except Exception:
+            msg = ""
+        raise RuntimeError(f"HTTP {e.code} from Instagram API. {msg}") from None
 
 
 def refresh_token(token):
@@ -60,9 +73,10 @@ def refresh_token(token):
         print(f"::warning::Token refresh failed: {e}")
 
 
-def fetch_posts(token, count):
+def fetch_posts(token, count, user_id=None):
     fields = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp"
-    url = f"{API}/me/media?" + urllib.parse.urlencode(
+    base = f"{FB_API}/{user_id}" if user_id else f"{API}/me"
+    url = f"{base}/media?" + urllib.parse.urlencode(
         {"fields": fields, "limit": count, "access_token": token})
     posts = []
     for item in get_json(url).get("data", [])[:count]:
@@ -151,12 +165,22 @@ def main():
         with open(args.sample, encoding="utf-8") as f:
             posts = json.load(f)[:count]
     else:
-        token = os.environ.get("IG_ACCESS_TOKEN")
+        token = os.environ.get("IG_ACCESS_TOKEN", "").strip()
         if not token:
             print("::notice::IG_ACCESS_TOKEN secret is not set yet; skipping the Instagram feed update.")
             return
-        refresh_token(token)
-        posts = fetch_posts(token, count)
+        user_id = None
+        if token.startswith("EAA"):
+            # System-user token from Meta's Unified login: never expires, read via the Facebook Graph API.
+            user_id = os.environ.get("IG_USER_ID", "").strip()
+            if not user_id:
+                sys.exit("::error::IG_USER_ID is required with a Unified login (EAA...) token.")
+        else:
+            refresh_token(token)
+        try:
+            posts = fetch_posts(token, count, user_id)
+        except RuntimeError as e:
+            sys.exit(f"::error::Could not fetch posts. {e}")
 
     if not posts:
         sys.exit("No posts returned; leaving the site unchanged.")
