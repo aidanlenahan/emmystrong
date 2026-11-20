@@ -3,7 +3,7 @@
 
 Runs from .github/workflows/events-feed.yml. It downloads the calendar's
 iCal feed, works out every occurrence (including repeating events), then writes:
-  news.html         upcoming events, between EVENTS:START / EVENTS:END
+  events.html       upcoming events, between EVENTS:START / EVENTS:END
   past-events.html  events that have ended, between PAST_EVENTS:START / END
   events.ics        a public copy of every event on the calendar (past ones stay until
                     deleted from Google Calendar) for "Subscribe to calendar",
@@ -11,7 +11,7 @@ iCal feed, works out every occurrence (including repeating events), then writes:
 
 Environment:
   GCAL_ICS_URL     the calendar's "Secret address in iCal format" (GitHub secret)
-  EVENT_COUNT      optional, max upcoming events on News (default 6)
+  EVENT_COUNT      optional, max upcoming events on Events (default 6)
   PAST_COUNT       optional, max events on the Past Events page (default 30)
 
 Local testing:
@@ -376,8 +376,8 @@ def build_ics(events):
         if ev.get("location"):
             lines.append("LOCATION:" + ics_escape(ev["location"].strip()))
         desc = plain_description(ev.get("description"))
-        lines.append("DESCRIPTION:" + ics_escape((desc + "\n\n" if desc else "") + f"{SITE_URL}/news"))
-        lines += [f"URL:{SITE_URL}/news", "END:VEVENT"]
+        lines.append("DESCRIPTION:" + ics_escape((desc + "\n\n" if desc else "") + f"{SITE_URL}/events"))
+        lines += [f"URL:{SITE_URL}/events", "END:VEVENT"]
     lines.append("END:VCALENDAR")
     return "\r\n".join(ics_fold(l) for l in lines) + "\r\n"
 
@@ -441,7 +441,7 @@ def main():
     past = [e for e in occ if has_ended(e, now)][::-1]
     print(f"{len(upcoming)} upcoming, {len(past)} past event(s).")
 
-    update_page("news.html", "EVENTS", render(upcoming[:count], EMPTY_UPCOMING))
+    update_page("events.html", "EVENTS", render(upcoming[:count], EMPTY_UPCOMING))
     update_page("past-events.html", "PAST_EVENTS", render(past[:past_count], EMPTY_PAST, past=True))
     write_if_changed("events.ics", build_ics(occ))  # upcoming and past events
 
