@@ -131,16 +131,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    const toggles = document.querySelectorAll(".event-toggle");
+    // Events and news posts: on phones each starts collapsed and only one stays
+    // open at a time; on wider screens they're always open.
+    const toggles = document.querySelectorAll(".event-toggle, .news-toggle");
     if (!toggles.length) return;
     const phone = window.matchMedia("(max-width: 600px)");
     const apply = () => toggles.forEach(d => { d.open = !phone.matches; });
     apply();
     phone.addEventListener("change", apply);
-    // On wider screens details are always shown, so clicking an event does nothing.
-    toggles.forEach(d => d.querySelector("summary").addEventListener("click", e => {
-      if (!phone.matches) e.preventDefault();
-    }));
+    toggles.forEach(d => {
+      d.querySelector("summary").addEventListener("click", e => {
+        if (!phone.matches) e.preventDefault();
+      });
+      d.addEventListener("toggle", () => {
+        if (!phone.matches || !d.open) return;
+        toggles.forEach(other => { if (other !== d) other.open = false; });
+      });
+    });
   }
 
   initEvents();
