@@ -2,12 +2,17 @@
 """Bake upcoming events from a Google Calendar into the static site.
 
 Runs from .github/workflows/events-feed.yml. It downloads the calendar's
-iCal feed, works out the next upcoming events (including repeating ones),
-and rewrites the HTML between the EVENTS:START / EVENTS:END markers.
+iCal feed, works out every occurrence (including repeating events), then writes:
+  news.html         upcoming events, between EVENTS:START / EVENTS:END
+  past-events.html  events that have ended, between PAST_EVENTS:START / END
+  events.ics        a public copy of every event on the calendar (past ones stay until
+                    deleted from Google Calendar) for "Subscribe to calendar",
+                    so the private Google Calendar link is never published
 
 Environment:
   GCAL_ICS_URL     the calendar's "Secret address in iCal format" (GitHub secret)
-  EVENT_COUNT      optional, max events to show (default 6)
+  EVENT_COUNT      optional, max upcoming events on News (default 6)
+  PAST_COUNT       optional, max events on the Past Events page (default 30)
 
 Local testing:
   python .github/scripts/update_events.py --ics calendar.ics [--now 2026-11-20T09:00]
@@ -25,13 +30,13 @@ from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-PAGES = ["news.html"]
+SITE_URL = "https://emmy-strong.org"
 SITE_TZ = ZoneInfo("America/New_York")
 HORIZON_DAYS = 365
-MARKER = re.compile(r"(<!-- EVENTS:START -->)(.*?)(<!-- EVENTS:END -->)", re.S)
 WEEKDAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
-EMPTY = ('\n      <p class="note center">No upcoming events right now. Follow '
-         '<a href="https://www.instagram.com/emmystrongnj/">@emmystrongnj</a> for new dates.</p>\n      ')
+EMPTY_UPCOMING = ('No upcoming events right now. Follow '
+                  '<a href="https://www.instagram.com/emmystrongnj/">@emmystrongnj</a> for new dates.')
+EMPTY_PAST = "No past events yet."
 
 
 # ---------- iCal parsing ----------
@@ -86,7 +91,7 @@ def parse_events(text):
                     current["exdates"].add(parse_dt(v, params)[0])
             elif name == "RECURRENCE-ID":
                 current["recurrence_id"] = parse_dt(value, params)[0]
-            elif name in ("SUMMARY", "LOCATION", "DESCRIPTION", "UID", "STATUS"):
+            elif name in ("SUMMARY", "LOCATION", "DESCRIPTION", "UID", "STATUS", "LAST-MODIFIED"):
                 current[name.lower()] = unescape(value)
     return events
 
@@ -191,7 +196,9 @@ def same_moment(a, b):
     return compare_key(a) == compare_key(b)
 
 
-def upcoming(events, now, count):
+def all_occurrences(events, now):
+    """Every non-cancelled occurrence still on the calendar, up to HORIZON_DAYS ahead.
+    Past events stay until they are deleted from the Google Calendar."""
     until = now + timedelta(days=HORIZON_DAYS)
     overrides = [e for e in events if "recurrence_id" in e]
     results = []
@@ -215,10 +222,18 @@ def upcoming(events, now, count):
             results.append(dict(o, end=o["start"] + o_dur))
     results = [r for r in results
                if r.get("status", "").upper() != "CANCELLED"
-               and compare_key(r["end"]) > now
                and compare_key(r["start"]) <= until]
     results.sort(key=lambda r: compare_key(r["start"]))
-    return results[:count]
+    return results
+
+
+def end_moment(ev):
+    """When an event is over (events with no end time count as over once they start)."""
+    return compare_key(ev["end"]) if compare_key(ev["end"]) > compare_key(ev["start"]) else compare_key(ev["start"])
+
+
+def has_ended(ev, now):
+    return end_moment(ev) <= now
 
 
 # ---------- HTML ----------
@@ -228,17 +243,18 @@ def clock(t):
     return s.replace(":00", "")
 
 
-def when(ev):
+def when(ev, with_year=False):
     start, end = ev["start"], ev["end"]
+    year = f", {start.year}" if with_year else ""
     if not isinstance(start, datetime):  # all-day (DTEND is exclusive)
         last = end - timedelta(days=1)
         if last <= start:
-            return start.strftime("%A, %B ") + str(start.day)
+            return start.strftime("%A, %B ") + str(start.day) + year
         if last.month == start.month:
-            return f"{start.strftime('%B')} {start.day}–{last.day}"
-        return f"{start.strftime('%B')} {start.day} – {last.strftime('%B')} {last.day}"
+            return f"{start.strftime('%B')} {start.day}–{last.day}{year}"
+        return f"{start.strftime('%B')} {start.day} – {last.strftime('%B')} {last.day}{year}"
     s, e = start.astimezone(SITE_TZ), end.astimezone(SITE_TZ)
-    day = s.strftime("%A, %B ") + str(s.day)
+    day = s.strftime("%A, %B ") + str(s.day) + (f", {s.year}" if with_year else "")
     if e <= s:
         return f"{day} · {clock(s)}"
     if e.date() != s.date():
@@ -248,9 +264,9 @@ def when(ev):
     return f"{day} · {clock(s)}–{clock(e)}"
 
 
-def when_html(ev):
+def when_html(ev, with_year=False):
     """Date and time, with the time kept unbroken so it can sit on its own line on phones."""
-    text = when(ev)
+    text = when(ev, with_year)
     if " · " not in text:
         return f'<span class="nowrap">{html.escape(text)}</span>'
     day, t = text.split(" · ", 1)
@@ -258,11 +274,15 @@ def when_html(ev):
             f'<span class="event-time nowrap">{html.escape(t)}</span>')
 
 
-def clean_description(text, limit=320):
-    """Google descriptions may contain HTML. Keep plain text, then link bare URLs."""
-    text = re.sub(r"(?i)<br\s*/?>|</p>|</div>", "\n", text or "")
+def plain_description(text):
+    """Google descriptions may contain HTML; reduce it to plain text."""
+    text = re.sub(r"(?i)<br\s*/?>|</p>|</div>|</li>", "\n", text or "")
     text = html.unescape(re.sub(r"<[^>]+>", "", text))
-    text = re.sub(r"\s+", " ", text).strip()
+    return re.sub(r"[ \t]+", " ", re.sub(r"\n\s*\n+", "\n\n", text)).strip()
+
+
+def description_html(text, limit=600):
+    text = re.sub(r"\s+", " ", plain_description(text))
     if len(text) > limit:
         text = text[:limit - 3].rsplit(" ", 1)[0] + "…"
     out, pos = [], 0
@@ -275,47 +295,117 @@ def clean_description(text, limit=320):
     return "".join(out)
 
 
-def render(events):
+def iso_local(v):
+    return (v.astimezone(SITE_TZ) if isinstance(v, datetime) else v).isoformat()
+
+
+def render(events, empty_text, past=False):
+    """Each event with details is a <details> element, so phones can show just the
+    title and date until tapped. It starts open: without JavaScript, and on wider
+    screens, everything is visible."""
+    empty = f'<p class="note center events-empty"{" hidden" if events else ""}>{empty_text}</p>'
     if not events:
-        return EMPTY
+        return f"\n      {empty}\n      "
     items = []
     for ev in events:
         start = ev["start"]
         local = start.astimezone(SITE_TZ) if isinstance(start, datetime) else start
-        iso = local.isoformat() if isinstance(local, datetime) else local.isoformat()
-        parts = [
-            f'        <li class="event">',
-            f'          <time class="event-date" datetime="{iso}" aria-hidden="true">'
-            f'<span class="event-month">{local.strftime("%b")}</span><span class="event-day">{local.day}</span></time>',
-            f'          <div class="event-body">',
-            f'            <h3>{html.escape(ev.get("summary") or "EmmyStrong event")}</h3>',
-            f'            <p class="event-when">{when_html(ev)}</p>',
-        ]
+        summary = (
+            f'<time class="event-date" datetime="{iso_local(start)}" aria-hidden="true">'
+            f'<span class="event-month">{local.strftime("%b")}</span><span class="event-day">{local.day}</span></time>'
+            '<span class="event-head">'
+            f'<span class="event-title">{html.escape(ev.get("summary") or "EmmyStrong event")}</span>'
+            f'<span class="event-when">{when_html(ev, with_year=past)}</span></span>'
+        )
+        details = []
         loc = (ev.get("location") or "").strip()
         if loc:
             maps = "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote(loc)
-            parts.append(f'            <p class="event-where"><a href="{html.escape(maps)}">{html.escape(loc)}</a></p>')
-        desc = clean_description(ev.get("description"))
+            details.append(f'<p class="event-where"><a href="{html.escape(maps)}">{html.escape(loc)}</a></p>')
+        desc = description_html(ev.get("description"))
         if desc:
-            parts.append(f'            <p>{desc}</p>')
-        parts += ["          </div>", "        </li>"]
-        items.append("\n".join(parts))
-    return '\n      <ul class="event-list">\n' + "\n".join(items) + "\n      </ul>\n      "
+            details.append(f"<p>{desc}</p>")
+        if details:
+            body = (f'<details class="event-toggle" open><summary class="event-summary">{summary}</summary>'
+                    f'<div class="event-details">{"".join(details)}</div></details>')
+        else:
+            body = f'<div class="event-summary">{summary}</div>'
+        end_iso = end_moment(ev).astimezone(SITE_TZ).isoformat()
+        items.append(f'        <li class="event" data-end="{end_iso}">{body}</li>')
+    cls = "event-list event-list-past" if past else "event-list event-list-upcoming"
+    return f'\n      <ul class="{cls}">\n' + "\n".join(items) + f"\n      </ul>\n      {empty}\n      "
 
 
-def update_pages(block):
-    for page in PAGES:
-        path = os.path.join(ROOT, page)
-        with open(path, encoding="utf-8") as f:
-            original = f.read()
-        if not MARKER.search(original):
-            print(f"::warning::No EVENTS markers in {page}; skipped.")
-            continue
-        updated = MARKER.sub(lambda m: m.group(1) + block + m.group(3), original, count=1)
-        if updated != original:
-            with open(path, "w", encoding="utf-8", newline="\n") as f:
-                f.write(updated)
-            print(f"Updated {page}.")
+# ---------- public .ics for "Subscribe" ----------
+
+def ics_escape(text):
+    return (text or "").replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+def ics_fold(line):
+    out, raw = [], line.encode("utf-8")
+    while len(raw) > 75:
+        cut = 75 if not out else 74
+        while cut and (raw[cut] & 0xC0) == 0x80:  # don't split a UTF-8 character
+            cut -= 1
+        out.append(raw[:cut].decode("utf-8"))
+        raw = raw[cut:]
+    out.append(raw.decode("utf-8"))
+    return "\r\n ".join(out)
+
+
+def ics_value(v):
+    if isinstance(v, datetime):
+        return ":" + v.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return ";VALUE=DATE:" + v.strftime("%Y%m%d")
+
+
+def build_ics(events):
+    lines = [
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//EmmyStrong Foundation//Events//EN",
+        "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:EmmyStrong Events",
+        "X-WR-TIMEZONE:America/New_York", "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H",
+    ]
+    for ev in events:
+        stamp = compare_key(ev["start"]).strftime("%Y%m%dT%H%M%SZ")
+        modified = ev.get("last-modified") or stamp  # stable, so the file only changes when events do
+        uid = re.sub(r"[^\w.@-]", "", ev.get("uid") or "event")
+        lines += ["BEGIN:VEVENT", f"UID:{uid}-{stamp}", f"DTSTAMP:{modified}",
+                  "DTSTART" + ics_value(ev["start"]), "DTEND" + ics_value(ev["end"]),
+                  "SUMMARY:" + ics_escape(ev.get("summary") or "EmmyStrong event")]
+        if ev.get("location"):
+            lines.append("LOCATION:" + ics_escape(ev["location"].strip()))
+        desc = plain_description(ev.get("description"))
+        lines.append("DESCRIPTION:" + ics_escape((desc + "\n\n" if desc else "") + f"{SITE_URL}/news"))
+        lines += [f"URL:{SITE_URL}/news", "END:VEVENT"]
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(ics_fold(l) for l in lines) + "\r\n"
+
+
+# ---------- output ----------
+
+def write_if_changed(name, content):
+    path = os.path.join(ROOT, name)
+    try:
+        with open(path, encoding="utf-8", newline="") as f:
+            if f.read() == content:
+                return
+    except FileNotFoundError:
+        pass
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(content)
+    print(f"Updated {name}.")
+
+
+def update_page(page, marker, block):
+    path = os.path.join(ROOT, page)
+    with open(path, encoding="utf-8", newline="") as f:
+        original = f.read()
+    pattern = re.compile(rf"(<!-- {marker}:START -->)(.*?)(<!-- {marker}:END -->)", re.S)
+    if not pattern.search(original):
+        print(f"::warning::No {marker} markers in {page}; skipped.")
+        return
+    write_if_changed(page, pattern.sub(lambda m: m.group(1) + block + m.group(3), original, count=1))
 
 
 def main():
@@ -324,6 +414,7 @@ def main():
     parser.add_argument("--now", help="pretend current time, e.g. 2026-11-20T09:00 (Eastern)")
     args = parser.parse_args()
     count = int(os.environ.get("EVENT_COUNT", "6"))
+    past_count = int(os.environ.get("PAST_COUNT", "30"))
 
     if args.ics:
         with open(args.ics, encoding="utf-8") as f:
@@ -344,10 +435,15 @@ def main():
             sys.exit("::error::The calendar link didn't return an iCal file. Check the GCAL_ICS_URL secret.")
 
     now = (datetime.fromisoformat(args.now).replace(tzinfo=SITE_TZ) if args.now
-           else datetime.now(timezone.utc))
-    events = upcoming(parse_events(text), now.astimezone(timezone.utc), count)
-    print(f"{len(events)} upcoming event(s).")
-    update_pages(render(events))
+           else datetime.now(timezone.utc)).astimezone(timezone.utc)
+    occ = all_occurrences(parse_events(text), now)
+    upcoming = [e for e in occ if not has_ended(e, now)]
+    past = [e for e in occ if has_ended(e, now)][::-1]
+    print(f"{len(upcoming)} upcoming, {len(past)} past event(s).")
+
+    update_page("news.html", "EVENTS", render(upcoming[:count], EMPTY_UPCOMING))
+    update_page("past-events.html", "PAST_EVENTS", render(past[:past_count], EMPTY_PAST, past=True))
+    write_if_changed("events.ics", build_ics(occ))  # upcoming and past events
 
 
 if __name__ == "__main__":

@@ -1,0 +1,24 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//EmmyStrong Foundation//Events//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:EmmyStrong Events
+X-WR-TIMEZONE:America/New_York
+REFRESH-INTERVAL;VALUE=DURATION:PT1H
+X-PUBLISHED-TTL:PT1H
+BEGIN:VEVENT
+UID:2o7tr4qr1a6rn0trlc4vvk5lb8@google.com-20261123T220000Z
+DTSTAMP:20261120T074512Z
+DTSTART:20261123T220000Z
+DTEND:20261124T020000Z
+SUMMARY:Chipotle Fundraiser in Red Bank
+LOCATION:Chipotle\, 20 Water St.\, Red Bank\, NJ 07701
+DESCRIPTION:25% of event sales will be donated to EmmyStrong. Order online 
+ for pickup with code Y63ACWX\, or show the fundraiser flyer in the restaur
+ ant.\nDelivery orders and gift cards do not qualify. Orders must be for pi
+ ckup from this location during the fundraiser hours.\n\nhttps://emmy-stron
+ g.org/news
+URL:https://emmy-strong.org/news
+END:VEVENT
+END:VCALENDAR
