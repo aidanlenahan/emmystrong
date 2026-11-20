@@ -37,7 +37,7 @@ import urllib.request
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MEDIA_DIR = os.path.join(ROOT, "media", "instagram")
 MEDIA_URL = "media/instagram"  # relative, so the page also previews correctly from file://
-PAGES = ["index.html"]
+PAGES = ["index.html", "news.html"]
 PROFILE_URL = "https://www.instagram.com/emmystrongnj/"
 API = "https://graph.instagram.com"           # Instagram Login tokens (start with "IG")
 FB_API = "https://graph.facebook.com/v23.0"   # Unified login / system-user tokens (start with "EAA")
@@ -119,9 +119,11 @@ def render(posts):
     items = []
     for p in posts:
         label = "Video" if p.get("is_video") else "Post"
+        text = html.escape(alt_text(p["caption"]))
         items.append(
-            f'        <li><a href="{html.escape(p["permalink"])}" aria-label="{label} on Instagram: {html.escape(alt_text(p["caption"]))}">'
-            f'<img src="{MEDIA_URL}/{p["file"]}" alt="{html.escape(alt_text(p["caption"]))}" width="320" height="320" loading="lazy" decoding="async"></a></li>'
+            f'        <li><a href="{html.escape(p["permalink"])}" aria-label="{label} on Instagram: {text}">'
+            f'<img src="{MEDIA_URL}/{p["file"]}" alt="" width="320" height="320" loading="lazy" decoding="async">'
+            f'<span class="ig-caption" aria-hidden="true"><span>{text}</span></span></a></li>'
         )
     return (
         "\n      <ul class=\"ig-grid\">\n" + "\n".join(items) + "\n      </ul>\n      "

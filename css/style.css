@@ -387,6 +387,7 @@ a:hover { color: var(--text); }
   gap: 0.75rem;
 }
 .ig-grid a {
+  position: relative;
   display: block;
   aspect-ratio: 1;
   overflow: hidden;
@@ -400,11 +401,46 @@ a:hover { color: var(--text); }
   display: block;
   transition: transform 300ms var(--ease-out);
 }
+.ig-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2.5rem 0.75rem 0.7rem;
+  background: linear-gradient(to top, rgba(7, 15, 28, 0.9), rgba(7, 15, 28, 0.55) 55%, rgba(7, 15, 28, 0));
+  color: #fff;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+.ig-caption > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+/* Mouse users: caption slides up on hover. Touch screens (no hover) always show a short caption. */
 @media (hover: hover) and (pointer: fine) {
-  .ig-grid a:hover img { transform: scale(1.03); }
+  .ig-caption {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+  }
+  .ig-grid a:hover img,
+  .ig-grid a:focus-visible img { transform: scale(1.03); }
+  .ig-grid a:hover .ig-caption,
+  .ig-grid a:focus-visible .ig-caption { opacity: 1; transform: none; }
 }
 @media (max-width: 600px) {
   .ig-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .ig-caption {
+    padding: 1.75rem 0.5rem 0.5rem;
+    font-size: 0.72rem;
+  }
+  .ig-caption > span {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
 }
 
 /* Board */
