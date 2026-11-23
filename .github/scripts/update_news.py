@@ -14,7 +14,8 @@ Sheet columns (first row is the header; order doesn't matter, case doesn't matte
              optional, each button's label (default "Learn more")
   Image, Image 2 ... Image 5
              optional, image URLs or Google Drive share links (the Drive file
-             must be shared as "Anyone with the link"). More than one image
+             must be shared as "Anyone with the link"), or the file name of a
+             picture committed to media/news (e.g. holidaydrive26.webp). More than one image
              shows as a slideshow. Pictures are never cropped: the leftover
              space is filled with a blurred copy of the picture.
   Show       optional, "no" hides the post
@@ -108,7 +109,14 @@ def drive_id(url):
 
 
 def save_image(url, row, column):
-    """Download the image into media/news and return its path, or None."""
+    """Download the image into media/news and return its path, or None.
+    A plain file name (e.g. holidaydrive26.webp) uses a picture already in media/news."""
+    if not re.match(r"https?://", url):
+        local = os.path.basename(url.strip().replace("\\", "/"))
+        if os.path.isfile(os.path.join(ROOT, IMG_DIR, local)):
+            return f"{IMG_DIR}/{local}"
+        print(f"::warning::Row {row}, {column}: no file named {local!r} in {IMG_DIR}. Skipping it.")
+        return None
     fid = drive_id(url)
     src = f"https://drive.google.com/uc?export=download&id={fid}" if fid else url
     name = hashlib.sha1(src.encode()).hexdigest()[:16]
@@ -236,12 +244,12 @@ def main():
             images[p["_row"]] = paths
     print(f"{len(posts)} news post(s), {sum(map(len, images.values()))} image(s).")
 
-    # Remove images no longer used by any post.
+    # Remove downloaded images no longer used by any post. Files added by hand are kept.
     img_root = os.path.join(ROOT, IMG_DIR)
     if os.path.isdir(img_root):
         keep = {os.path.basename(p) for paths in images.values() for p in paths}
         for f in os.listdir(img_root):
-            if f not in keep and f != ".gitkeep":
+            if f not in keep and re.fullmatch(r"[0-9a-f]{16}\.\w+", f):
                 os.remove(os.path.join(img_root, f))
 
     path = os.path.join(ROOT, PAGE)
