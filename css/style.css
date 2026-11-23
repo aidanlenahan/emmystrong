@@ -610,7 +610,7 @@ a:hover { color: var(--text); }
 .news-body p { margin: 0 0 0.75rem; overflow-wrap: anywhere; }
 .news-text p:last-child { margin-bottom: 0; }
 .news-cta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1rem 0 0 !important; }
-/* Cards show the first few lines; "Read more" opens the whole post. */
+/* Cards show the first few lines; clicking the card opens the whole post. */
 .news-item .news-text {
   --lines: 4;
   max-height: calc(var(--lines) * 1.6em);
@@ -621,18 +621,31 @@ a:hover { color: var(--text); }
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
   mask-image: linear-gradient(to bottom, #000 55%, transparent);
 }
+/* The whole card opens the full post. When the text is cut, the fade plus a
+   small expand icon in the corner hint that there's more. */
+.news-item { cursor: pointer; transition: box-shadow 0.2s ease, transform 0.2s ease; }
+.news-item:hover { transform: translateY(-2px); box-shadow: 0 1px 2px rgba(15, 23, 36, 0.06), 0 14px 32px rgba(15, 23, 36, 0.12); }
+.news-body { position: relative; }
+.news-item.has-more .news-body > :is(.news-date, .news-title) { padding-right: 2.25rem; }
 .news-more {
-  margin-top: 0.5rem;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   border: 0;
-  background: none;
+  border-radius: 50%;
+  background: rgba(255, 130, 0, 0.12);
   color: var(--accent-ink);
-  font: inherit;
-  font-weight: 700;
   cursor: pointer;
 }
-.news-more::after { content: " →"; }
-.news-more:hover, .news-more:focus-visible { text-decoration: underline; }
+.news-more[hidden] { display: none; }
+.news-more svg { width: 1rem; height: 1rem; }
+.news-item:hover .news-more, .news-more:focus-visible { background: var(--accent-ink); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .news-item:hover { transform: none; } }
 
 /* Full post view */
 .news-modal {

@@ -241,13 +241,27 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!text || !more) return;
         const cut = text.scrollHeight > text.clientHeight + 2;
         text.classList.toggle("is-cut", cut);
+        post.classList.toggle("has-more", cut);
         more.hidden = !cut;
       });
     }
     document.querySelectorAll(".news-list .news-carousel").forEach(initCarousel);
     posts.forEach(post => {
+      // The corner icon is the keyboard / screen-reader way in; a click anywhere
+      // on the card does the same, except on its links and slideshow buttons.
       const more = post.querySelector(".news-more");
-      if (more) more.addEventListener("click", () => open(post));
+      if (more) {
+        more.setAttribute("aria-label", "Read the whole post");
+        more.title = "Read the whole post";
+        more.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9"/></svg>';
+      }
+      post.addEventListener("click", e => {
+        if (e.target.closest("a, button:not(.news-more)")) return;
+        if (String(window.getSelection())) return; // selecting text, not opening
+        open(post);
+      });
     });
     measure();
     window.addEventListener("resize", measure);
